@@ -17,6 +17,17 @@ public class Candidate {
     @Column
     private String password;
 
+    @Column
+    private boolean verification;
+
+    public boolean isVerification() {
+        return verification;
+    }
+
+    public void setVerification(boolean verification) {
+        this.verification = verification;
+    }
+
     public String getExperience() {
         return experience;
     }

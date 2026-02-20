@@ -54,32 +54,29 @@
 <body>
 <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="card p-4 col-md-6">
-        <h2 class="register-header">Join AI Interview Prep</h2>
-        <p class="info-text">Sign in your account and start practicing for real-world AI interviews!</p>
-        <form th:action="@{/login}" th:object="${authuser}" method="post">
+        <h2 class="register-header">Verify your email</h2>
+        <p class="info-text"></p>
+        <form th:action="@{/verify}" method="post">
 
             <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
+                <label for="otp" class="form-label">Enter OTP</label>
                 <p style="color: red" th:text="${message}"></p>
-                <p style="color: red" th:text="${email}"></p>
+                <p style="color: green" th:text="${successmessage}"></p>
+                <p style="color: red" th:text="${otp}"></p>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fa fa-envelope"></i></span>
-                    <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="you@example.com" required>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <p style="color: red" th:text="${password}"></p>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fa fa-lock"></i></span>
-                    <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="********" required>
+                    <input type="text" name="otp" class="form-control" id="otp" required>
                 </div>
             </div>
 
 
-            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+
+
+            <button type="submit" class="btn btn-primary w-100">Verify</button>
+
         </form>
-        <p class="footer-text mt-3">Don't have account? <a href="/registerpage" style="color: #fff; font-weight:700;">Sign Up</a></p>
+        <a th:href="@{/send-otp}">Send OTP</a>
+
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

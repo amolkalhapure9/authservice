@@ -3,12 +3,14 @@ package org.example.authservice.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 import org.example.authservice.dto.LoginDto;
 import org.example.authservice.dto.RegisterDto;
 import org.example.authservice.entity.Candidate;
 import org.example.authservice.myservice.CustomUserDetails;
+import org.example.authservice.myservice.EmailVerification;
 import org.example.authservice.myservice.MyService;
 import org.example.authservice.securityfilter.MySecurityFilterChain;
 import org.example.authservice.springvalidation.SpringValidation;
@@ -27,10 +29,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 public class MyController {
@@ -41,7 +42,10 @@ public class MyController {
      @Autowired
      JwtUtil jwtToken;
 
+     @Autowired
+     EmailVerification emailVerification;
 
+Logger logger=LoggerFactory.getLogger(MyController.class);
 
 
     @Autowired
@@ -66,7 +70,7 @@ public class MyController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute("user") RegisterDto register, BindingResult result, Model model){
+    public String register(@Valid @ModelAttribute("user") RegisterDto register, BindingResult result, HttpSession session, Model model){
         if(result.hasErrors()){
             for(FieldError err: result.getFieldErrors()){
                 model.addAttribute(err.getField(), err.getDefaultMessage());
@@ -78,10 +82,15 @@ public class MyController {
 
         else{
 
-         boolean isRegistered=myservice.registerUser(register);
-      System.out.println(isRegistered);
-         if(isRegistered){
-             return "welcome";
+
+         Candidate candidate=myservice.findUserByEmail(register.getEmail());
+
+         if(candidate==null){
+             register.setVerification(false);
+              myservice.registerUser(register);
+              session.setAttribute("register",register);
+
+              return "verify";
          }
          else{
              model.addAttribute("email", "email is already exists");
@@ -89,16 +98,85 @@ public class MyController {
 
          }
 
-
-
         }
 
 
 
-
-
-
     }
+
+
+
+
+@GetMapping("/send-otp")
+public String verifyAccount(HttpSession session, HttpServletRequest request, Model model) {
+    String email = null;
+    boolean verification = false;
+    RegisterDto dto = (RegisterDto) session.getAttribute("register");
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (dto != null) {
+        email = dto.getEmail();
+        verification = dto.isVerification();
+        if (verification == false) {
+            logger.info("User is not verified with email"+dto.getEmail());
+            int otp = emailVerification.sendOtp();
+            session.setAttribute("otp", otp);
+            emailVerification.sendEmail(email, otp);
+            model.addAttribute("successmessage", "OTP has been sent to your registered email");
+            logger.info("OTP sent to "+dto.getEmail());
+            return "verify";
+
+
+        }
+        else{
+            return "login";
+        }
+    }
+    else{
+        return "welcome";
+    }
+
+}
+
+@PostMapping("/verify")
+public String verifyEmail(HttpServletRequest request, HttpSession session, Model model){
+        String userOtp=request.getParameter("otp");
+        try{
+            int serverOtp=(int)session.getAttribute("otp");
+            System.out.println(serverOtp);
+            if(String.valueOf(serverOtp)!=null && userOtp.equals(String.valueOf(serverOtp))){
+                RegisterDto dto=(RegisterDto) session.getAttribute("register");
+                boolean b=myservice.verifyEmail(dto);
+
+                if(b){
+                    logger.info("User is verified with email"+dto.getEmail());
+                    return "Authenticate";
+                }
+                else{
+                    return "verify";
+                }
+
+
+            }
+            else{
+                model.addAttribute("message", "Please enter valid OTP");
+                return "verify";
+            }
+        }
+        catch(Exception e){
+            model.addAttribute("message", "Please enter the correct OTP");
+            return "verify";
+        }
+
+
+}
+
+
+
+
+
+
+
+
 
     @GetMapping("/loginpage")
     public String openLoginPage(Model model){
@@ -130,20 +208,23 @@ public class MyController {
 
                   response.addCookie(cookie);
 
+                  logger.info("User Logged in: "+userDetails.getName());
 
-
-                  return "welcome";
+                  return "redirect:/dashboard/"+userDetails.getName();
 
               }
+              else {
+                  System.out.println("Runninf");
 
-
-              return "login";
+                  model.addAttribute("message", "Please enter correct credentials");
+                  return "login";
+              }
           }
 
 
     }
-    @GetMapping("/dashboard")
-    public String dashboard(HttpServletRequest req, HttpServletResponse response, Model model){
+    @GetMapping("/dashboard/{username}")
+    public String dashboard(@PathVariable("username") String Username, HttpServletRequest req, HttpServletResponse response, Model model){
       Authentication auth= SecurityContextHolder.getContext().getAuthentication();
       if(auth!=null){
           CustomUserDetails userDetails=(CustomUserDetails) auth.getPrincipal();
@@ -152,6 +233,12 @@ public class MyController {
       }
 
         return "Authenticate";
+    }
+
+    @GetMapping("/logout")
+    public String logout(){
+        return "welcome";
+
     }
 }
 

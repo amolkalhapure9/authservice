@@ -17,6 +17,15 @@ public class RegisterDto {
     @NotBlank(message = "PLease select the correct level")
     private String experience;
 
+    private boolean verification;
+
+    public boolean isVerification() {
+        return verification;
+    }
+
+    public void setVerification(boolean verification) {
+        this.verification = verification;
+    }
 
     public String getEmail() {
         return email;

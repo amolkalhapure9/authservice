@@ -55,12 +55,24 @@ public class MySecurityFilterChain {
                                 "/register",
                                 "/login",
                                 "/login/**",
-                                "/loginpage"
+                                "/loginpage",
+                                "/verify",
+                                "/verify/**",
+                                "/send-otp"
                                 ).permitAll()
                                 .anyRequest().authenticated()
 
-                ) .formLogin(formlogin->formlogin.disable())
-                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
+                ) .formLogin(formlogin->formlogin
+                        .loginPage("/welcome")
+                        .defaultSuccessUrl("/dashboard"))
+
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout->
+                        logout.logoutUrl("/logout")
+                                .logoutSuccessUrl("/welcome")
+                                .deleteCookies("JWT")
+                                .invalidateHttpSession(true));
+
         return http.build();
 
 
