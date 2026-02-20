@@ -8,16 +8,19 @@ import java.util.Collection;
 import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
-    private Long id;
+
     private String email;
     private String password;
     private String name;
 
+    private boolean verification;
+
     public CustomUserDetails(Candidate candidate) {
-        this.id = candidate.getId();
+//        this.id = candidate.getId();
         this.email = candidate.getEmail();
         this.password = candidate.getPassword();
         this.name = candidate.getName();
+        this.verification=candidate.isVerification();
     }
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -27,6 +30,10 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getPassword() {
         return password;
+    }
+
+    public boolean isVerification() {
+        return verification;
     }
 
     @Override

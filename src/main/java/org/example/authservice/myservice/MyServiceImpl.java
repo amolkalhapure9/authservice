@@ -30,6 +30,7 @@ public class MyServiceImpl implements MyService, UserDetailsService {
         candidate.setName(dto.getName());
         candidate.setEmail(dto.getEmail());
         candidate.setExperience(dto.getExperience());
+        candidate.setVerification(dto.isVerification());
 
         String password=dto.getPassword();
         String encoded=encoder.encode(password);
@@ -50,6 +51,20 @@ public class MyServiceImpl implements MyService, UserDetailsService {
 
         return false;
 
+
+    }
+
+    public boolean verifyEmail(RegisterDto dto){
+        Candidate candidate=new Candidate();
+        candidate.setEmail(dto.getEmail());
+
+        int rowsUpdates=repository.verifyUserByEmail(candidate.getEmail());
+        if(rowsUpdates>0){
+            return true;
+        }
+        else{
+            return false;
+        }
 
     }
 
