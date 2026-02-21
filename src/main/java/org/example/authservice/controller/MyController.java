@@ -49,7 +49,6 @@ Logger logger=LoggerFactory.getLogger(MyController.class);
 
 
     @Autowired
-    @Qualifier("myServiceImpl")
     MyService myservice;
 
     @InitBinder("user")
@@ -112,7 +111,7 @@ public String verifyAccount(HttpSession session, HttpServletRequest request, Mod
     String email = null;
     boolean verification = false;
     RegisterDto dto = (RegisterDto) session.getAttribute("register");
-    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (dto != null) {
         email = dto.getEmail();
         verification = dto.isVerification();
